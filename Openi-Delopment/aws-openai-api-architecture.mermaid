@@ -1,0 +1,43 @@
+graph TD
+    %% Internet Gateway and VPC
+    Internet((Internet)) --> ALB[Application Load Balancer]
+    subgraph VPC[VPC - 10.0.0.0/16]
+        %% Load Balancer and Security
+        ALB --> |Port 80| SG1[Load Balancer Security Group]
+        
+        subgraph Public Subnets
+            SG1 --> |Forward| TG[Target Group]
+            
+            subgraph "ECS Cluster"
+                TG --> |Port 5000| SG2[ECS Service Security Group]
+                
+                subgraph "Fargate Tasks"
+                    Task1[ECS Task 1]
+                    Task2[ECS Task 2]
+                    SG2 --> Task1
+                    SG2 --> Task2
+                end
+            end
+        end
+    end
+    
+    %% External Services
+    Task1 --> |Get API Key| SM[AWS Secrets Manager]
+    Task2 --> |Get API Key| SM
+    
+    Task1 --> |Logs| CW[CloudWatch Logs]
+    Task2 --> |Logs| CW
+    
+    Task1 --> |Call API| OpenAI[OpenAI API]
+    Task2 --> |Call API| OpenAI
+    
+    %% ECR for Container Images
+    ECR[Amazon ECR] --> |Pull Image| Task1
+    ECR --> |Pull Image| Task2
+
+    %% Styling
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px;
+    classDef external fill:#1EC9E8,stroke:#232F3E,stroke-width:2px;
+    
+    class ALB,VPC,TG,SM,CW,ECR aws;
+    class OpenAI,Internet external;

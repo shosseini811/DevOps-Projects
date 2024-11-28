@@ -7,15 +7,15 @@ Parameters:
     Default: dev
     Description: Environment name
 
-  OpenAIApiKey:
-    Type: String
-    NoEcho: true
-    Description: OpenAI API Key
-
   ContainerPort:
     Type: Number
     Default: 5000
     Description: Port the container exposes
+
+  OpenAIAPISecret:
+    Type: String
+    Default: arn:aws:secretsmanager:us-east-1:051677741640:secret:dev/openai-api-key-WaXnhi
+    Description: ARN of the OpenAI API Key secret in Secrets Manager
 
 Resources:
   # VPC and Networking
@@ -105,40 +105,44 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-
-  OpenAIAPISecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${EnvironmentName}/openai-api-key
-      SecretString: !Ref OpenAIApiKey
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref OpenAIAPISecret
 
   TaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub ${EnvironmentName}-openai-api
-      Cpu: '256'
-      Memory: '512'
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
-      ContainerDefinitions:
-        - Name: openai-api
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/openai-api-app:latest
-          PortMappings:
-            - ContainerPort: !Ref ContainerPort
-          Environment:
-            - Name: PORT
-              Value: !Ref ContainerPort
-          Secrets:
-            - Name: OPENAI_API_KEY
-              ValueFrom: !Ref OpenAIAPISecret
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref LogGroup
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: ecs
+      Type: AWS::ECS::TaskDefinition    # AWS ECS Task Definition resource type
+      Properties:
+        Family: !Sub ${EnvironmentName}-openai-api    # Task definition family name (e.g., "dev-openai-api")
+        Cpu: '256'      # 0.25 vCPU
+        Memory: '512'   # 512 MB RAM
+        NetworkMode: awsvpc    # Uses AWS VPC networking mode (required for Fargate)
+        RequiresCompatibilities:
+          - FARGATE    # Specifies this task runs on Fargate
+        ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn    # IAM role for task execution
+
+        ContainerDefinitions:    # Definition of containers in the task
+          - Name: openai-api    # Container name
+            Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/openai-api-app:latest    # ECR image
+            PortMappings:
+              - ContainerPort: !Ref ContainerPort    # Port exposed by container
+            Environment:    # Environment variables
+              - Name: PORT
+                Value: !Ref ContainerPort
+            Secrets:    # Sensitive environment variables from Secrets Manager
+              - Name: OPENAI_API_KEY    # Will be available as OPENAI_API_KEY env var
+                ValueFrom: !Ref OpenAIAPISecret    # References the secret we set up
+            LogConfiguration:    # CloudWatch logs configuration
+              LogDriver: awslogs
+              Options:
+                awslogs-group: !Ref LogGroup
+                awslogs-region: !Ref AWS::Region
+                awslogs-stream-prefix: ecs
 
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -180,16 +184,16 @@ Resources:
       UnhealthyThresholdCount: 5
 
   # Security Groups
-  LoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  LoadBalancerSecurityGroup:  # Name of the security group
+    Type: AWS::EC2::SecurityGroup  # AWS Security Group resource type
     Properties:
-      GroupDescription: Access to the load balancer
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
+      GroupDescription: Access to the load balancer  # Description of the security group
+      VpcId: !Ref VPC  # Associates this security group with your VPC
+      SecurityGroupIngress:  # Inbound rules
+        - IpProtocol: tcp  # TCP protocol
+          FromPort: 80     # Start port
+          ToPort: 80      # End port
+          CidrIp: 0.0.0.0/0  # Allow access from any IP address
 
   ServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -201,29 +205,31 @@ Resources:
           FromPort: !Ref ContainerPort
           ToPort: !Ref ContainerPort
           SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
-
+      
   # ECS Service
   Service:
-    Type: AWS::ECS::Service
-    DependsOn: LoadBalancerListener
-    Properties:
-      ServiceName: !Sub ${EnvironmentName}-openai-api
-      Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref TaskDefinition
-      DesiredCount: 2
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          Subnets:
-            - !Ref PublicSubnet1
-            - !Ref PublicSubnet2
-          SecurityGroups:
-            - !Ref ServiceSecurityGroup
-      LoadBalancers:
-        - ContainerName: openai-api
-          ContainerPort: !Ref ContainerPort
-          TargetGroupArn: !Ref TargetGroup
+      Type: AWS::ECS::Service    # AWS ECS Service resource type
+      DependsOn: LoadBalancerListener    # Ensures the Listener exists before creating the service
+      Properties:
+        ServiceName: !Sub ${EnvironmentName}-openai-api    # Name of the service (e.g., "dev-openai-api")
+        Cluster: !Ref ECSCluster    # Reference to the ECS cluster where this service runs
+        TaskDefinition: !Ref TaskDefinition    # Reference to the task definition that defines the containers
+        DesiredCount: 2    # Number of tasks (containers) to run - here it maintains 2 replicas
+        LaunchType: FARGATE    # Uses AWS Fargate (serverless) instead of EC2 instances
+        
+        NetworkConfiguration:    # Network settings for the tasks
+          AwsvpcConfiguration:
+            AssignPublicIp: ENABLED    # Tasks get public IPs
+            Subnets:    # Tasks will be placed in these subnets
+              - !Ref PublicSubnet1
+              - !Ref PublicSubnet2
+            SecurityGroups:    # Security group for the tasks
+              - !Ref ServiceSecurityGroup
+        
+        LoadBalancers:    # Load balancer configuration
+          - ContainerName: openai-api    # Name of the container to route traffic to
+            ContainerPort: !Ref ContainerPort    # Port on the container
+            TargetGroupArn: !Ref TargetGroup    # Target group for load balancing
 
 Outputs:
   LoadBalancerDNS:
