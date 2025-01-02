@@ -1,0 +1,38 @@
+graph TB
+    subgraph Kubernetes Cluster
+        subgraph Frontend
+            UI[Browser/UI]
+        end
+
+        subgraph "Flask App Pod"
+            Flask[Flask Application]
+            SQLAlchemy[SQLAlchemy ORM]
+        end
+
+        subgraph "PostgreSQL Pod"
+            Postgres[(PostgreSQL DB)]
+            PVC[Persistent Volume Claim]
+        end
+
+        subgraph "Kubernetes Services"
+            FlaskService[Flask Service<br>NodePort: 30000]
+            PostgresService[Postgres Service<br>ClusterIP]
+        end
+    end
+
+    UI -->|HTTP Requests| FlaskService
+    FlaskService -->|Port 5001| Flask
+    Flask -->|ORM| SQLAlchemy
+    SQLAlchemy -->|Port 5432| PostgresService
+    PostgresService -->|Port 5432| Postgres
+    Postgres -->|Storage| PVC
+
+    classDef k8sService fill:#326ce5,color:white;
+    classDef pod fill:#326ce5,color:white;
+    classDef storage fill:#ff9900,color:white;
+    classDef frontend fill:#85c3ff,color:black;
+
+    class FlaskService,PostgresService k8sService;
+    class Flask,Postgres pod;
+    class PVC storage;
+    class UI frontend;

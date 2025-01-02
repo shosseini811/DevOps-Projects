@@ -53,3 +53,10 @@ spec:
         - name: postgres-storage
           persistentVolumeClaim:
             claimName: postgres-pvc 
+
+
+
+# Real-Life Analogy:
+# containerPort: The room number inside a house where the person lives (PostgreSQL listens here).
+# targetPort: The door to that room (used to deliver messages to the person).
+# port: The address of the house where others send mail or knock to get in.
