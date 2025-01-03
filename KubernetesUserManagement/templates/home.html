@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes User Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .endpoint {
+            border-left: 4px solid #0d6efd;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        .method {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .path {
+            color: #212529;
+            font-family: monospace;
+        }
+        .description {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Kubernetes User Management</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">API Documentation</h2>
+                        <p class="card-text">Welcome to the Kubernetes User Management API. This service provides endpoints for user authentication and management in a Kubernetes cluster.</p>
+                        
+                        <h3 class="mt-4">Authentication Endpoints</h3>
+                        <div class="endpoint">
+                            <span class="method">POST</span>
+                            <span class="path">/api/register</span>
+                            <div class="description">Register a new user with username and password (Admin only)</div>
+                        </div>
+                        <div class="endpoint">
+                            <span class="method">POST</span>
+                            <span class="path">/api/login</span>
+                            <div class="description">Login and receive a JWT token</div>
+                        </div>
+
+                        <h3 class="mt-4">Admin Endpoints</h3>
+                        <div class="endpoint">
+                            <span class="method">GET</span>
+                            <span class="path">/api/users</span>
+                            <div class="description">List all users (Admin only)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h3 class="card-title">Getting Started</h3>
+                        <ol>
+                            <li>Login to receive your JWT token using the <code>/api/login</code> endpoint</li>
+                            <li>Use the JWT token in the Authorization header for protected endpoints</li>
+                            <li>Admins can create new users using the <code>/api/register</code> endpoint</li>
+                            <li>Admins can view all users using the <code>/api/users</code> endpoint</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light mt-5 py-3">
+        <div class="container text-center">
+            <p class="text-muted mb-0">Kubernetes User Management Platform &copy; 2024</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
