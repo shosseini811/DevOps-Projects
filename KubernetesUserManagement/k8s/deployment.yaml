@@ -17,7 +17,7 @@ spec:
       containers:
       - name: k8s-user-management
         image: k8s-user-management:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Never
         ports:
         - containerPort: 5001
         env:
@@ -39,6 +39,7 @@ spec:
             cpu: "200m"
             memory: "256Mi"
 ---
+
 apiVersion: v1
 kind: Service
 metadata:

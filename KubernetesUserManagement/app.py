@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from kubernetes import client, config
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import os
 import logging
@@ -32,7 +32,7 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='user')
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime)
 
     def __init__(self, username, email, password, role='user'):
@@ -60,38 +60,42 @@ def role_required(roles):
 # Initialize database with default users
 def init_db():
     with app.app_context():
-        db.create_all()
-        
-        # Check if admin user exists
-        admin_user = User.query.filter_by(username='admin').first()
-        if not admin_user:
-            admin_user = User(
-                username='admin',
-                email='admin@example.com',
-                password=os.getenv('ADMIN_PASSWORD', 'admin123'),  # Change in production
-                role='admin'
-            )
-            db.session.add(admin_user)
+        try:
+            logger.info("Starting database initialization...")
+            db.create_all()
+            logger.info("Database tables created successfully")
             
-            # Add a test user
-            test_user = User(
-                username='test_user',
-                email='test@example.com',
-                password='test123',  # Change in production
-                role='user'
-            )
-            db.session.add(test_user)
-            
-            try:
+            # Check if admin user exists
+            admin_user = User.query.filter_by(username='admin').first()
+            if not admin_user:
+                admin_user = User(
+                    username='admin',
+                    email='admin@example.com',
+                    password=os.getenv('ADMIN_PASSWORD', 'admin123'),  # Change in production
+                    role='admin'
+                )
+                db.session.add(admin_user)
+                
+                # Add a test user
+                test_user = User(
+                    username='test_user',
+                    email='test@example.com',
+                    password='test123',  # Change in production
+                    role='user'
+                )
+                db.session.add(test_user)
+                
                 db.session.commit()
                 logger.info("Database initialized with default users")
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Error initializing database: {str(e)}")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error initializing database: {str(e)}")
+            raise  # Re-raise the exception to see the full error
 
 # Enhanced Routes
 @app.route('/api/register', methods=['POST'])
-@role_required(['admin'])  # Only admins can create new users
+@jwt_required()
+@role_required(['admin'])
 def register():
     try:
         data = request.get_json()
@@ -139,7 +143,7 @@ def login():
             return jsonify({'error': 'Account is deactivated'}), 403
             
         # Update last login time
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(timezone.utc)
         db.session.commit()
         
         access_token = create_access_token(identity=user.username)
@@ -204,5 +208,6 @@ def create_k8s_namespace(username):
         raise
 
 if __name__ == '__main__':
-    init_db()  # Initialize database with default users
+    with app.app_context():
+        init_db()  # Initialize database with default users
     app.run(host='0.0.0.0', port=5001)

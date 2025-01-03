@@ -1,24 +1,40 @@
 # Kubernetes User Management Platform
 
-A secure, scalable platform for managing Kubernetes user access and resource quotas.
+A secure Flask-based web application for managing user authentication and Kubernetes namespace automation.
 
 ## Features
 
-- User authentication with JWT
-- Resource quota management
-- Kubernetes namespace automation
-- PostgreSQL database integration
-- Containerized deployment
-- Kubernetes-native deployment
+- User Authentication System
+  - JWT-based authentication
+  - Role-based access control (admin/user roles)
+  - Secure password hashing
+  - User activity tracking (last login, creation date)
+
+- Admin Capabilities
+  - User registration management
+  - User listing and management
+  - Role assignment
+
+- Kubernetes Integration
+  - Automatic namespace creation for users
+  - Kubernetes configuration management
+  - Support for both in-cluster and local development
+
+- Database Integration
+  - PostgreSQL backend
+  - SQLAlchemy ORM
+  - Automatic database initialization
+  - User state persistence
 
 ## Prerequisites
 
+- Python 3.10+
+- PostgreSQL database
 - Docker
 - Kubernetes cluster (minikube, kind, or cloud provider)
 - kubectl configured
-- Python 3.10+
 
-## Setup
+## Local Development Setup
 
 1. Clone the repository:
 ```bash
@@ -26,22 +42,65 @@ git clone <repository-url>
 cd KubernetesUserManagement
 ```
 
-2. Build the Docker image:
+2. Create and activate virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Set up environment variables:
+```bash
+export DATABASE_URL="postgresql://postgres:123456@localhost:5432/k8s_users"
+export JWT_SECRET_KEY="your-secret-key"  # Change in production
+export ADMIN_PASSWORD="admin123"  # Change in production
+```
+
+5. Initialize the database:
+```bash
+python init_db.py
+```
+
+6. Run the application:
+```bash
+python app.py
+```
+
+The application will be available at http://localhost:5001
+
+## Docker Deployment
+
+1. Build the Docker image:
 ```bash
 docker build -t k8s-user-management:latest .
 ```
 
-3. Create Kubernetes secrets (modify values for production):
+2. Run the container:
 ```bash
-kubectl apply -f k8s/secrets.yaml
+docker run -p 5000:5000 \
+  -e DATABASE_URL="postgresql://postgres:123456@host.docker.internal:5432/k8s_users" \
+  -e JWT_SECRET_KEY="your-secret-key" \
+  -e ADMIN_PASSWORD="admin123" \
+  k8s-user-management:latest
 ```
 
-4. Deploy PostgreSQL:
+## Kubernetes Deployment
+
+1. Deploy PostgreSQL:
 ```bash
 kubectl apply -f k8s/postgres.yaml
 ```
 
-5. Deploy the application:
+2. Create secrets:
+```bash
+kubectl apply -f k8s/secrets.yaml
+```
+
+3. Deploy the application:
 ```bash
 kubectl apply -f k8s/deployment.yaml
 ```
@@ -49,44 +108,40 @@ kubectl apply -f k8s/deployment.yaml
 ## API Endpoints
 
 ### Authentication
-- POST /api/register - Register a new user
-- POST /api/login - Login and get JWT token
+- `POST /api/login` - User login
+- `POST /api/register` - Register new user (admin only)
 
-### Resource Management
-- POST /api/request-resources - Request resource quota
-- GET /api/resources - Get user's resource quotas
+### Admin
+- `GET /api/users` - List all users (admin only)
 
-## Development
+### Web Interface
+- `GET /` - Home page
 
-1. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+## Security Considerations
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run locally:
-```bash
-python files.py
-```
-
-## Security Notes
-
-- Change all default secrets in `secrets.yaml` before deploying to production
+- Change all default passwords and secrets before deploying to production
 - Use proper SSL/TLS in production
-- Implement proper role-based access control (RBAC)
-- Regular security audits and updates
+- Implement network policies in Kubernetes
+- Regular security audits
+- Monitor user activities and login attempts
 
-## Monitoring
+## Testing
 
-The application can be monitored using:
-- Kubernetes dashboard
-- Prometheus metrics (endpoint: /metrics)
-- Grafana dashboards (setup separately)
+The project includes a comprehensive test suite:
+
+```bash
+python run_tests.py
+```
+
+## Dependencies
+
+- Flask - Web framework
+- Flask-SQLAlchemy - ORM for database operations
+- Flask-JWT-Extended - JWT authentication
+- psycopg2-binary - PostgreSQL adapter
+- kubernetes - Kubernetes API client
+
+- gunicorn - Production WSGI server
 
 ## License
 
