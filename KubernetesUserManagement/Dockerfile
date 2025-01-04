@@ -7,6 +7,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5001
+
+# # Add initialization step
+# RUN python init.py
 
 CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:app"] 
