@@ -1,62 +1,69 @@
-# DevOps Projects Repository
+# FastAPI Monitoring and Logging Demo
 
-This repository contains a collection of DevOps-focused projects demonstrating various cloud-native technologies, infrastructure automation, and containerization practices.
+This project demonstrates a production-ready FastAPI setup with monitoring and logging capabilities.
 
-## Projects
+## Features
 
-### 1. Kubernetes User Management Platform
-A Flask-based web application that provides user authentication and automated Kubernetes namespace management. This project demonstrates:
-- Containerization with Docker
-- Kubernetes deployment and configuration
-- PostgreSQL database integration
-- JWT-based authentication
-- CI/CD best practices
-- Automated testing
-
-[Learn more about Kubernetes User Management](./KubernetesUserManagement/README.md)
-
-### 2. Flask Postgres Kubernetes Demo
-A demonstration of deploying a Flask application with PostgreSQL on Kubernetes, showcasing:
-- Container orchestration
-- Database persistence in Kubernetes
-- Service networking
-- Configuration management
-
-[Explore Flask Postgres K8s Demo](./flask-postgres-k8s/)
-
-### 3. Terraform AWS Demo
-Infrastructure as Code (IaC) examples using Terraform to provision AWS resources, featuring:
-- AWS infrastructure automation
-- Best practices for cloud resource management
-- Terraform state management
-- Infrastructure modularity
-
-[View Terraform AWS Demo](./terraform-aws-demo/)
-
-## Getting Started
-
-Each project contains its own README with specific setup instructions. Choose a project based on your interests:
-- For Kubernetes and container orchestration, start with the Kubernetes User Management Platform
-- For basic containerized applications, check out the Flask Postgres K8s Demo
-- For cloud infrastructure automation, explore the Terraform AWS Demo
+- FastAPI backend with structured logging
+- Prometheus metrics integration
+- Grafana dashboards for visualization
+- Docker and Docker Compose setup
+- Built-in health checks and monitoring endpoints
 
 ## Prerequisites
 
-Different projects may require different tools, but here are the common prerequisites:
-- Docker
-- Kubernetes (minikube, kind, or cloud provider)
-- Python 3.10+
-- Terraform (for AWS demos)
-- AWS CLI (for AWS-related projects)
+- Docker and Docker Compose
+- Python 3.9+ (for local development)
 
-## Contributing
+## Quick Start
 
-Feel free to contribute to any of the projects by:
-1. Forking the repository
-2. Creating a feature branch
-3. Committing your changes
-4. Opening a pull request
+1. Clone the repository
+2. Run the stack:
+   ```bash
+   docker-compose up --build
+   ```
 
-## License
+## Accessing Services
 
-This repository is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- FastAPI Application: http://localhost:8000
+- FastAPI Swagger Docs: http://localhost:8000/docs
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000 (admin/admin)
+
+## Monitoring Endpoints
+
+- Application Health: http://localhost:8000/health
+- Metrics: http://localhost:8000/metrics
+
+## Development
+
+1. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Run the application:
+   ```bash
+   python src/main.py
+   ```
+
+## Logging
+
+The application uses structured logging with the following features:
+- Request/response logging with timing
+- JSON format for easy parsing
+- Correlation IDs for request tracking
+
+## Metrics
+
+The following metrics are available:
+- Request latency
+- Request counts by endpoint
+- HTTP status codes
+- System metrics (CPU, memory)

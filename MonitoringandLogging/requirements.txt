@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+prometheus-client
+prometheus-fastapi-instrumentator
+python-json-logger
+pydantic
+pytest
+requests
+structlog
