@@ -108,6 +108,78 @@ terraform-mongodb/
 - `GET /items/{item_id}`: Get a specific item
 - `DELETE /items/{item_id}`: Delete an item
 
+### Using the API
+
+#### 1. Using curl
+```bash
+# Create a new item
+curl -X POST "http://localhost:5001/items/" \
+-H "Content-Type: application/json" \
+-d '{
+    "name": "Test Item",
+    "description": "This is a test item",
+    "price": 29.99,
+    "quantity": 100
+}'
+
+# Get all items
+curl "http://localhost:5001/items/"
+
+# Get specific item
+curl "http://localhost:5001/items/{item_id}"
+
+# Delete an item
+curl -X DELETE "http://localhost:5001/items/{item_id}"
+```
+
+#### 2. Using Python requests
+```python
+import requests
+
+base_url = "http://localhost:5001"
+
+# Create a new item
+data = {
+    "name": "Test Item",
+    "description": "This is a test item",
+    "price": 29.99,
+    "quantity": 100
+}
+response = requests.post(f"{base_url}/items/", json=data)
+print(response.json())
+
+# Get all items
+response = requests.get(f"{base_url}/items/")
+print(response.json())
+
+# Get specific item
+item_id = "your_item_id"
+response = requests.get(f"{base_url}/items/{item_id}")
+print(response.json())
+
+# Delete an item
+response = requests.delete(f"{base_url}/items/{item_id}")
+print(response.json())
+```
+
+#### 3. Using Swagger UI
+The API includes interactive documentation that can be accessed at `http://localhost:5001/docs`. This interface allows you to:
+- Explore all available endpoints
+- Test API calls directly from the browser
+- View request/response schemas
+- Execute operations with a user-friendly interface
+
+#### Request Body Schema
+When creating items, use the following JSON structure:
+```json
+{
+    "name": "string",          // required
+    "description": "string",   // optional
+    "price": 0.0,             // required (float)
+    "quantity": 0             // required (integer)
+}
+```
+
 ## Infrastructure Details
 
 - VPC with public subnet

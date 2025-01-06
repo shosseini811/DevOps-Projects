@@ -81,7 +81,7 @@ docker build -t k8s-user-management:latest .
 
 2. Run the container:
 ```bash
-docker run -p 5000:5000 \
+docker run -p 5001:5001 \
   -e DATABASE_URL="postgresql://postgres:123456@host.docker.internal:5432/k8s_users" \
   -e JWT_SECRET_KEY="your-secret-key" \
   -e ADMIN_PASSWORD="admin123" \

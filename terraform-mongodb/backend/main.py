@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import os
 from dotenv import load_dotenv
+import uvicorn
 
 load_dotenv()
 
@@ -65,3 +66,6 @@ async def delete_item(item_id: str):
         raise HTTPException(status_code=404, detail="Item not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 
+    
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=5001)
